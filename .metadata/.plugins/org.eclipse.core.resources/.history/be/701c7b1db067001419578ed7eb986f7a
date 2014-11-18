@@ -1,0 +1,306 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+
+using namespace std;
+using namespace cv;
+
+int n_boards = 0;		//Number of snapshots of the chessboard
+int board_w;			//Enclosed corners horizontally on the chessboard
+int board_h;			//Enclosed corners vertically on the chessboard
+
+// function to calculate average reprojection error !!!
+double reprojection_error( const CvMat* obj_points, const CvMat* rot_vects, const CvMat* trans_vects,
+		const CvMat* camera_matrix, const CvMat* dist_coeffs, const CvMat* img_points,
+		const CvMat* point_counts, CvMat* per_view_errors, char final_images[][15] )
+{
+	CvMat* img_points2 = cvCreateMat( img_points->rows,img_points->cols, img_points->type );
+	int i, image_count = rot_vects->rows, points_so_far = 0;
+	double total_err = 0, err;
+
+	cvNamedWindow("Reprojection Error in the Images");
+	IplImage* img_error;
+
+	printf("*****Starting Display for Reprojection Error *****\n\n");
+	printf("GREEN --> Detected Image Corners \n Red --> Projected Image Corners By using Calculated Camera Matrix \n\n");
+	for( i = 0; i < image_count; i++ )
+	{
+		img_error = cvLoadImage(final_images[i]);
+		CvMat obj_points_i, img_points_i, img_points2_i;
+		int point_count = CV_MAT_ELEM( *point_counts, int, i, 0);
+
+		CvMat rot_vect, trans_vect;
+		cvGetRows( obj_points, &obj_points_i, points_so_far, points_so_far + point_count );
+		cvGetRows( img_points, &img_points_i,points_so_far, points_so_far + point_count );
+		cvGetRows( img_points2, &img_points2_i, points_so_far, points_so_far + point_count );
+
+		points_so_far += point_count;
+
+		cvGetRow( rot_vects, &rot_vect, i );
+		cvGetRow( trans_vects, &trans_vect, i );
+
+		cvProjectPoints2( &obj_points_i, &rot_vect, &trans_vect,
+				camera_matrix, dist_coeffs, &img_points2_i,
+				0, 0, 0, 0, 0 );
+
+		for( int k=0, j=0; j<point_count; ++k,++j ) {
+
+			cvCircle(img_error,
+					cvPoint(CV_MAT_ELEM(img_points2_i, float,k,0), CV_MAT_ELEM(img_points2_i, float,k,1)), 3,
+					cvScalar(0, 0, 255, 0),
+					-1, 8, 0);
+			cvCircle(img_error,
+					cvPoint(CV_MAT_ELEM(img_points_i, float,k,0), CV_MAT_ELEM(img_points_i, float,k,1)), 3,
+					cvScalar(0, 255, 0, 0),
+					-1, 8, 0);
+
+		}
+		cvShowImage("Reprojection Error in the Images",img_error);
+		cvWaitKey(3000);
+		double temp_error =0.0f, err_sum=0.0f;
+		for(int k=0;k<point_count;k++)
+		{
+			temp_error = sqrt((pow((CV_MAT_ELEM(img_points_i, float,k,0)-CV_MAT_ELEM(img_points2_i, float,k,0)),2)+ pow((CV_MAT_ELEM(img_points_i, float,k,1)-CV_MAT_ELEM(img_points2_i, float,k,1)),2 )));
+			err_sum = err_sum + temp_error;
+
+		}
+		printf("error sum for %d image is %f \n",i,err_sum/point_count);
+		if( per_view_errors )
+			per_view_errors->data.db[i] = err_sum/point_count;
+		total_err += err_sum/point_count;
+
+	}
+	cvDestroyWindow("Reprojection Error in the Images");
+	cvReleaseMat( &img_points2 );
+	return total_err/image_count;
+}
+
+
+int main()
+{
+
+	int start, total;
+	char str[15],ext[15];
+	int board_h = 0, board_w = 0;
+	printf("Enter the name of the Images (String) without numeric denominator:  ");
+	scanf( "%s", str);
+	printf("Enter the extension of the Images (String):  ");
+	scanf( "%s", ext);
+	printf("Enter the total number of the File (should be integer) starting with index << 1 >> :: ");
+	scanf( "%d", &total);
+	printf("Enter the the board width (should be integer) :: ");
+	scanf( "%d", &board_w);
+	printf("Enter the the board height (should be integer) :: ");
+	scanf( "%d", &board_h);
+
+	n_boards = total;
+
+	//board_w  = 12;
+	//board_h  = 12;
+
+	int board_total  = board_w * board_h;						//Total enclosed corners on the board
+	CvSize board_sz = cvSize( board_w, board_h );
+
+	//Allocate storage for the parameters according to total number of corners and number of snapshots
+	CvMat* image_points      = cvCreateMat(n_boards*board_total,2,CV_32FC1);
+	CvMat* object_points     = cvCreateMat(n_boards*board_total,3,CV_32FC1);
+	CvMat* point_counts      = cvCreateMat(n_boards,1,CV_32SC1);
+	CvMat* intrinsic_matrix  = cvCreateMat(3,3,CV_32FC1);
+	CvMat* distortion_coeffs = cvCreateMat(4,1,CV_32FC1);
+	CvPoint2D32f* corners = new CvPoint2D32f[ board_total ];
+
+	int corner_count;
+	int successes = 0;
+	int step, frame = 0;
+
+
+	char imgstr[total-1][15];
+
+	for(int i = 1; i<= total; i++)
+	{
+		sprintf(imgstr[i-1], "%s%d", str, i);
+		strcat(imgstr[i-1],".");
+		strcat(imgstr[i-1],ext);
+	}
+
+	printf("Loading Images....... \n\n");
+	IplImage* image;
+	IplImage *gray_image ;
+	cvNamedWindow( "Snapshot" );
+
+	char final_images[total-1][15];
+	int k = 0;
+	for(int i= 0; i< total;i++)
+	{
+		image = cvLoadImage(imgstr[i],1);
+
+		if(image==NULL )
+		{
+			printf("unable to load the frame --> %s\n",imgstr[i]);exit(0);
+		}
+		gray_image = cvCreateImage(cvGetSize(image),8,1);
+		//Find chessboard corners:
+		int found = cvFindChessboardCorners(image, board_sz, corners, &corner_count,CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS | CV_CALIB_CB_NORMALIZE_IMAGE );
+		cvCvtColor(image, gray_image, CV_BGR2GRAY);										//Get Subpixel accuracy on those corners
+		cvFindCornerSubPix(gray_image, corners, corner_count, cvSize(11,11),cvSize(-1,-1), cvTermCriteria(CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+		cvDrawChessboardCorners(image, board_sz, corners, corner_count, found);			//Draw it
+
+		// If we got a good board, add it to our data
+		printf("%s is Loaded ..... \n",imgstr[i]);
+		printf("Corner count for %s is << %d >> \n",imgstr[i],corner_count);
+		if( corner_count == board_total )
+		{
+
+			step = successes*board_total;
+			sprintf(final_images[k],"%s",imgstr[i]);
+
+			k++;
+			for( int i=step, j=0; j<board_total; ++i,++j ) {
+				CV_MAT_ELEM(*image_points, float,i,0) = corners[j].x;
+				CV_MAT_ELEM(*image_points, float,i,1) = corners[j].y;
+				CV_MAT_ELEM(*object_points,float,i,0) = (float) j/board_w;
+				CV_MAT_ELEM(*object_points,float,i,1) = (float) (j%board_w);
+				CV_MAT_ELEM(*object_points,float,i,2) = 0.0f;
+
+
+			}
+
+			cvShowImage( "Snapshot", image );
+			cvWaitKey(3000);
+
+			CV_MAT_ELEM(*point_counts, int,successes,0) = board_total;
+			successes++;
+		}
+		else{
+			cvShowImage( "Snapshot", image );
+			cvWaitKey(3000);
+		}
+
+
+
+	}
+	cvDestroyWindow("Snapshot");
+	printf("\r%d successful number of Images out of %d collected.",successes,n_boards);
+
+
+
+	//Allocate matrices according to successful number of captures
+	if(successes>0)
+	{
+		printf("\n\n *** Calbrating the camera now...\n");
+		CvMat* object_points2  = cvCreateMat(successes*board_total,3,CV_32FC1);
+		CvMat* image_points2   = cvCreateMat(successes*board_total,2,CV_32FC1);
+
+		CvMat* point_counts2   = cvCreateMat(successes,1,CV_32SC1);
+
+		CvMat* rot_vects=cvCreateMat(successes,3,CV_32FC1);
+		CvMat* trans_vects= cvCreateMat(successes,3,CV_32FC1);
+
+		//Tranfer the points to matrices
+		for(int i = 0; i<successes*board_total; ++i)
+		{
+			CV_MAT_ELEM( *image_points2, float, i, 0)  =	CV_MAT_ELEM( *image_points, float, i, 0);
+			CV_MAT_ELEM( *image_points2, float,i,1)    =	CV_MAT_ELEM( *image_points, float, i, 1);
+			CV_MAT_ELEM(*object_points2, float, i, 0)  =  CV_MAT_ELEM( *object_points, float, i, 0) ;
+			CV_MAT_ELEM( *object_points2, float, i, 1) =  CV_MAT_ELEM( *object_points, float, i, 1) ;
+			CV_MAT_ELEM( *object_points2, float, i, 2) =  CV_MAT_ELEM( *object_points, float, i, 2) ;
+
+		}
+
+		for(int i=0; i<successes; ++i)
+		{
+			CV_MAT_ELEM( *point_counts2, int, i, 0) =  CV_MAT_ELEM( *point_counts, int, i, 0);			//These are all the same number
+		}
+		cvReleaseMat(&object_points);
+		cvReleaseMat(&image_points);
+		cvReleaseMat(&point_counts);
+
+		// Initialize the intrinsic matrix with both the two focal lengths in a ratio of 1.0
+
+		CV_MAT_ELEM( *intrinsic_matrix, float, 0, 0 ) = 1.0f;
+		CV_MAT_ELEM( *intrinsic_matrix, float, 1, 1 ) = 1.0f;
+
+		//Calibrate the camera
+
+		cvCalibrateCamera2(object_points2, image_points2, point_counts2,  cvGetSize( image ), intrinsic_matrix, distortion_coeffs,rot_vects, trans_vects,0);
+
+		//Save values to file
+		printf(" *** Calibration Done!\n\n");
+		printf("Calculted Camera Matrix is: \n\n");
+		for (int i=0;i<3;i++)
+		{
+			printf("%f %f %f\n",CV_MAT_ELEM( *intrinsic_matrix, float, i, 0 ),CV_MAT_ELEM( *intrinsic_matrix, float, i, 1 ),CV_MAT_ELEM( *intrinsic_matrix, float, i, 2 ));
+
+		}
+		printf("Storing Intrinsics.xml and Distortions.xml files...\n");
+		cvSave("Intrinsics.xml",intrinsic_matrix);
+		cvSave("Distortion.xml",distortion_coeffs);
+		printf("Files saved.\n\n");
+
+		printf("Starting corrected display (Only for Images in which all corners are detected)....\n\n");
+
+		//Sample: load the matrices from the file
+		CvMat *intrinsic = (CvMat*)cvLoad("Intrinsics.xml");
+		CvMat *distortion = (CvMat*)cvLoad("Distortion.xml");
+
+		// Build the undistort map used for all subsequent frames.
+
+		IplImage* mapx = cvCreateImage( cvGetSize(image), IPL_DEPTH_32F, 1 );
+		IplImage* mapy = cvCreateImage( cvGetSize(image), IPL_DEPTH_32F, 1 );
+		cvInitUndistortMap(intrinsic,distortion,mapx,mapy);
+
+		// Run the camera to the screen, showing the raw and the undistorted image.
+
+		cvNamedWindow( "Rectified Image" );
+		cvNamedWindow( "Input Images");
+
+		char saveImage[k-1][15];
+
+
+		for(int i=0;i<k;i++)
+		{
+			image = cvLoadImage(final_images[i],1);
+			IplImage *t = cvCloneImage(image);
+			cvShowImage( "Input Images", image );			// Show raw image
+			cvRemap( t, image, mapx, mapy );			    // Undistort image
+			cvReleaseImage(&t);
+			cvShowImage("Rectified Image", image);			// Show corrected image
+			sprintf(saveImage[i], "%s%d", str, i+1);
+			strcat(saveImage[i],"_rect.");
+			strcat(saveImage[i],ext);
+			cvSaveImage(saveImage[i],image);
+			cvWaitKey(3000);
+
+		}
+		cvDestroyWindow("Rectified Image");
+		cvDestroyWindow("Input Images");
+
+		//Displaying Reprojection error in windows
+		double avg_reproj_err = 0;
+		CvMat* reproj_errs = cvCreateMat( 1, successes, CV_64FC1 );
+		avg_reproj_err = reprojection_error( object_points2, rot_vects, trans_vects,intrinsic_matrix, distortion_coeffs, image_points2,  point_counts2, reproj_errs, final_images );
+
+		printf("<<<< Average Reprojection error is %f  >>>>\n",avg_reproj_err);
+
+	}
+	else
+	{printf("\n\n *** Too Less Successful Corner Detection...\n");}
+
+	return 0;
+
+}

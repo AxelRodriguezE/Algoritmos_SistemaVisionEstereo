@@ -1,0 +1,49 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+#include "opencv2/objdetect/objdetect.hpp"
+
+using namespace std;
+using namespace cv;
+
+
+int main(int argc, char **argv)
+{
+	Mat image = imread("botella.png");
+	vector<string> models;
+	models.push_back("bottle.xml");
+
+	// LSVM
+	LatentSvmDetector detector(models);
+
+	vector<cv::LatentSvmDetector::ObjectDetection> detections;
+	detector.detect(image, detections);
+
+	const vector<string> classNames = detector.getClassNames();
+
+	for (size_t i = 0; i < detections.size(); i++) {
+		const cv::LatentSvmDetector::ObjectDetection &od = detections[i];
+		rectangle(image, od.rect, CV_RGB(255, 0, 0), 2);
+		//putText(image, classNames[od.classID], Point(od.rect.x+4, od.rect.y+13), FONT_HERSHEY_SIMPLEX, 0.55, CV_RGB(255, 255, 255), 2);
+	}
+
+	imshow("cat", image);
+	waitKey(0);
+
+	return 0;
+}

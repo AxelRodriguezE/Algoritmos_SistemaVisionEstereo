@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move &apos;in_VID5.xml&apos; to &apos;Debug&apos;" description="Move &apos;in_VID5.xml&apos; to &apos;Debug&apos;" destination="Debug" element1="src/in_VID5.xml" element2="src/out_camera_data.yml" element3="src/VID5.xml" flags="7" id="org.eclipse.ltk.core.refactoring.move.resources" resources="3" stamp="1410220837845" updateReferences="true"/>
+</session>

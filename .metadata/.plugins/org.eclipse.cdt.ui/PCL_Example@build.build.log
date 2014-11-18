@@ -1,0 +1,23 @@
+/usr/bin/make -j4 all 
+/usr/bin/cmake -H/home/axel/workspace_c/PCL_Example/src -B/home/axel/workspace_c/PCL_Example/build --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/cmake -E cmake_progress_start /home/axel/workspace_c/PCL_Example/build/CMakeFiles /home/axel/workspace_c/PCL_Example/build/CMakeFiles/progress.marks
+/usr/bin/make -f CMakeFiles/Makefile2 all
+make[1]: se ingresa al directorio «/home/axel/workspace_c/PCL_Example/build»
+/usr/bin/make -f CMakeFiles/pcd_write_test.dir/build.make CMakeFiles/pcd_write_test.dir/depend
+make[2]: se ingresa al directorio «/home/axel/workspace_c/PCL_Example/build»
+cd /home/axel/workspace_c/PCL_Example/build && /usr/bin/cmake -E cmake_depends "Unix Makefiles" /home/axel/workspace_c/PCL_Example/src /home/axel/workspace_c/PCL_Example/src /home/axel/workspace_c/PCL_Example/build /home/axel/workspace_c/PCL_Example/build /home/axel/workspace_c/PCL_Example/build/CMakeFiles/pcd_write_test.dir/DependInfo.cmake --color=
+Scanning dependencies of target pcd_write_test
+make[2]: se sale del directorio «/home/axel/workspace_c/PCL_Example/build»
+/usr/bin/make -f CMakeFiles/pcd_write_test.dir/build.make CMakeFiles/pcd_write_test.dir/build
+make[2]: se ingresa al directorio «/home/axel/workspace_c/PCL_Example/build»
+/usr/bin/cmake -E cmake_progress_report /home/axel/workspace_c/PCL_Example/build/CMakeFiles 1
+[100%] Building CXX object CMakeFiles/pcd_write_test.dir/main.cpp.o
+/usr/bin/c++   -DDISABLE_PCAP -DDISABLE_PNG -DEIGEN_USE_NEW_STDVECTOR -DEIGEN_YES_I_KNOW_SPARSE_MODULE_IS_NOT_STABLE_YET -Wno-deprecated -I/usr/include/vtk-5.8 -I/usr/include/pcl-1.7 -I/usr/include/eigen3 -I/usr/include/ni -I/usr/include/openni2    -o CMakeFiles/pcd_write_test.dir/main.cpp.o -c /home/axel/workspace_c/PCL_Example/src/main.cpp
+Linking CXX executable pcd_write_test
+/usr/bin/cmake -E cmake_link_script CMakeFiles/pcd_write_test.dir/link.txt --verbose=1
+/usr/bin/c++     -Wno-deprecated     CMakeFiles/pcd_write_test.dir/main.cpp.o  -o pcd_write_test -rdynamic -lboost_system -lboost_filesystem -lboost_thread -lboost_date_time -lboost_iostreams -lboost_serialization -lboost_chrono -lpthread -lpcl_common -lOpenNI -lOpenNI2 /usr/lib/libvtkCommon.so.5.8.0 /usr/lib/libvtkFiltering.so.5.8.0 /usr/lib/libvtkImaging.so.5.8.0 /usr/lib/libvtkGraphics.so.5.8.0 /usr/lib/libvtkGenericFiltering.so.5.8.0 /usr/lib/libvtkIO.so.5.8.0 /usr/lib/libvtkRendering.so.5.8.0 /usr/lib/libvtkVolumeRendering.so.5.8.0 /usr/lib/libvtkHybrid.so.5.8.0 /usr/lib/libvtkWidgets.so.5.8.0 /usr/lib/libvtkParallel.so.5.8.0 /usr/lib/libvtkInfovis.so.5.8.0 /usr/lib/libvtkGeovis.so.5.8.0 /usr/lib/libvtkViews.so.5.8.0 /usr/lib/libvtkCharts.so.5.8.0 -lpcl_io -lboost_system -lboost_filesystem -lboost_thread -lboost_date_time -lboost_iostreams -lboost_serialization -lboost_chrono -lpthread -lpcl_common -lpcl_octree -lboost_system -lboost_filesystem -lboost_thread -lboost_date_time -lboost_iostreams -lboost_serialization -lboost_chrono -lpthread -lpcl_common -lOpenNI -lOpenNI2 -lpcl_io -lpcl_octree /usr/lib/libvtkViews.so.5.8.0 /usr/lib/libvtkInfovis.so.5.8.0 /usr/lib/libvtkWidgets.so.5.8.0 /usr/lib/libvtkVolumeRendering.so.5.8.0 /usr/lib/libvtkHybrid.so.5.8.0 /usr/lib/libvtkParallel.so.5.8.0 /usr/lib/libvtkRendering.so.5.8.0 /usr/lib/libvtkImaging.so.5.8.0 /usr/lib/libvtkGraphics.so.5.8.0 /usr/lib/libvtkIO.so.5.8.0 /usr/lib/libvtkFiltering.so.5.8.0 /usr/lib/libvtkCommon.so.5.8.0 -lm /usr/lib/libvtksys.so.5.8.0 -ldl 
+make[2]: se sale del directorio «/home/axel/workspace_c/PCL_Example/build»
+/usr/bin/cmake -E cmake_progress_report /home/axel/workspace_c/PCL_Example/build/CMakeFiles  1
+[100%] Built target pcd_write_test
+make[1]: se sale del directorio «/home/axel/workspace_c/PCL_Example/build»
+/usr/bin/cmake -E cmake_progress_start /home/axel/workspace_c/PCL_Example/build/CMakeFiles 0

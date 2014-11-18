@@ -1,0 +1,130 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+
+using namespace std;
+using namespace cv;
+
+void correspondenciaSGBM(Mat &imagenIzq, Mat &imagenDer)
+{
+	Mat MapaDispSGBM, MapaDispSGBM_Norm;
+
+	StereoSGBM stereoSGBM;
+
+	stereoSGBM.SADWindowSize = 3;
+	stereoSGBM.numberOfDisparities = 144;
+	stereoSGBM.preFilterCap = 63;
+	stereoSGBM.minDisparity = -39;
+	stereoSGBM.uniquenessRatio = 10;
+	stereoSGBM.speckleWindowSize = 100;
+	stereoSGBM.speckleRange = 32;
+	stereoSGBM.disp12MaxDiff = 1;
+	stereoSGBM.fullDP = false;
+	stereoSGBM.P1 = 216;
+	stereoSGBM.P2 = 864;
+
+	//stereoSGBM(imagenIzq, imagenDer, MapaDispSGBM);
+	//normalize(MapaDispSGBM, MapaDispSGBM_Norm, 0, 255, CV_MINMAX, CV_8U);
+
+	//Inicio experimento...
+    Mat imgDisparity16S = Mat( imagenIzq.rows, imagenIzq.cols, CV_16S );
+    Mat imgDisparity8U = Mat( imagenIzq.rows, imagenIzq.cols, CV_8UC1 );
+
+    stereoSGBM(imagenIzq, imagenDer, imgDisparity16S, CV_16S);
+
+    double minVal; double maxVal;
+
+    minMaxLoc(imgDisparity16S, &minVal, &maxVal);
+
+    cout << "Min disp: " << minVal << "Max value: " << maxVal << endl;
+
+    //Display it as a CV_8UC1 image
+    imgDisparity16S.convertTo(imgDisparity8U, CV_8UC1, 255/(maxVal - minVal));
+
+    namedWindow("windowDisparity", CV_WINDOW_NORMAL);
+    imshow("windowDisparity", imgDisparity8U);
+    //...Fin experimento
+
+	//cout << "Coordenadas en Mapa de Disparidad 8U = " << MapaDispSGBM_Norm.at<Vec3f>(152,82) << endl;
+
+	//circle(MapaDispSGBM_Norm, Point(152,82), 5, Scalar(255,0,0), 1);
+	//circle(MapaDispSGBM_Norm, Point(383,466), 5, Scalar(150,0,0), 1);
+	//circle(MapaDispSGBM_Norm, Point(400,281), 5, Scalar(200,0,0), 1);
+	//circle(MapaDispSGBM_Norm, Point(99,476), 5, Scalar(210,0,0), 1);
+
+	//Mat MapaDispSGBM_Norm_32F;
+	//MapaDispSGBM_Norm.convertTo(MapaDispSGBM_Norm_32F, CV_32F); //Convertir mapa de disparidad en 32 bits
+
+	//cout << "Coordenadas en Mapa de Disparidad 32F = " << MapaDispSGBM_Norm_32F.at<Vec3f>(152,82) << endl;
+
+	//imshow("Mapa de Disparidad StereoSGBM", MapaDispSGBM_Norm);
+
+	//cout << "Disparidad(152,82)=" << MapaDispSGBM_Norm.at<double>(152,82) << endl;
+	//cout << "Disparidad(400,281)=" << MapaDispSGBM_Norm.at<double>(400,281) << endl;
+	//cout << "Disparidad(383,466)=" << MapaDispSGBM_Norm.at<double>(383,466) << endl;
+	//cout << "Disparidad(99,476)=" << MapaDispSGBM_Norm.at<double>(99,476) << endl;
+
+	Mat Q = Mat(4, 4, CV_64F);
+	FileStorage fs2("stereocalib.yml", FileStorage::READ);
+		fs2["Q"] >> Q;
+	fs2.release();
+
+	//Mat recons3D(MapaDispSGBM_Norm_32F.size(), CV_32FC3);
+	//Reproject image to 3D
+	//cout << "Reprojecting image to 3D..." << endl;
+	//reprojectImageTo3D(MapaDispSGBM_Norm_32F, recons3D, Q, false, CV_32F);
+	//imshow("algo xD", recons3D);
+
+	//cout << recons3D.at<Vec3f>(152,82) << endl;
+
+	//saveXYZ("Hola", recons3D);
+
+	Mat depthMap;
+
+	circle(MapaDispSGBM_Norm, Point(152,82), 5, Scalar(255,0,0), 1);
+	cout << "Disparidad(152,82)=" << MapaDispSGBM_Norm.at<double>(152,82) << endl;
+	cout << "Coordenadas en Mapa de Disparidad (152,82)= " << MapaDispSGBM_Norm.at<Vec3f>(152,82) << endl;
+	cout << "Disparidad(325,460)=" << MapaDispSGBM_Norm.at<double>(325,460) << endl;
+	cout << "Coordenadas en Mapa de Disparidad (325,460)= " << MapaDispSGBM_Norm.at<Vec3f>(325,460) << endl;
+
+	reprojectImageTo3D(MapaDispSGBM_Norm, depthMap, Q, true);
+
+	circle(depthMap, Point(152,82), 5, Scalar(255,0,0), 1);
+	cout << "Profundidad(152,82)=" << depthMap.at<double>(152,82) << endl;
+	cout << "Coordenadas en Mapa de Profundidad (152,82)= " << depthMap.at<Vec3f>(152,82) << endl;
+	cout << "Profundidad(325,460)=" << depthMap.at<double>(325,460) << endl;
+	cout << "Coordenadas en Mapa de Profundidad (325,460)= " << depthMap.at<Vec3f>(325,460) << endl;
+
+	imshow("Disparity", MapaDispSGBM_Norm);
+	imshow("3D", depthMap );
+}
+
+int main(int argc, char *argv[])
+{
+	Mat imagenIzq = imread("imgLeftRect.png");
+	Mat imagenDer = imread("imgRightRect.png");
+	//imshow("Imagen Izquierda", imagenIzq);
+	//imshow("Imagen Derecha", imagenDer);
+
+	correspondenciaSGBM(imagenIzq, imagenDer);
+
+	waitKey(0);
+	return 0;
+}
+
+

@@ -1,0 +1,32 @@
+
+**** Build of configuration Debug for project prueba opencv ****
+
+make all 
+Building target: prueba opencv
+Invoking: GCC C++ Linker
+g++ -L/usr/local/lib -o"prueba opencv"  ./src/DisplayImage.o ./src/calibracion.o   -lopencv_contrib -lopencv_objdetect -lopencv_legacy -lopencv_flann -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d -lopencv_calib3d 
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 0 tiene un índice de símbolo 11 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 1 tiene un índice de símbolo 12 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 2 tiene un índice de símbolo 2 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 3 tiene un índice de símbolo 2 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 4 tiene un índice de símbolo 11 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 5 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 6 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 7 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 8 tiene un índice de símbolo 12 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 9 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 10 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 11 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 12 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 13 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 14 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 15 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 16 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 17 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 18 tiene un índice de símbolo 13 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_info): la reubicación 19 tiene un índice de símbolo 21 inválido
+/usr/bin/ld: /usr/lib/debug/usr/lib/x86_64-linux-gnu/crt1.o(.debug_line): la reubicación 0 tiene un índice de símbolo 2 inválido
+/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu/crt1.o: En la función `_start':
+(.text+0x20): referencia a `main' sin definir
+collect2: error: ld returned 1 exit status
+make: *** [prueba opencv] Error 1

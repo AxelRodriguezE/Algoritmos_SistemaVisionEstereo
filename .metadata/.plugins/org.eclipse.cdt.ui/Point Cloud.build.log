@@ -1,0 +1,12 @@
+
+**** Build of configuration Debug for project Point Cloud ****
+
+make all 
+Building file: ../src/main.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/main.d" -MT"src/main.d" -o"src/main.o" "../src/main.cpp"
+../src/main.cpp:10:39: fatal error: pcl/common/common_headers.h: No existe el archivo o el directorio
+ #include <pcl/common/common_headers.h>
+                                       ^
+compilation terminated.
+make: *** [src/main.o] Error 1

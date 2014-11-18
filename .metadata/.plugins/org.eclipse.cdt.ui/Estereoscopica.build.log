@@ -1,0 +1,184 @@
+
+**** Build of configuration Debug for project Estereoscopica ****
+
+make all 
+Building file: ../src/main.cpp
+Invoking: GCC C++ Compiler
+g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/main.d" -MT"src/main.d" -o"src/main.o" "../src/main.cpp"
+../src/main.cpp:159:0: warning: ignoring #pragma omp parallel [-Wunknown-pragmas]
+ #pragma omp parallel for
+ ^
+../src/main.cpp: In function ‘void RectificationRGB(IplImage*, IplImage*, IplImage*, int, bool, float&, float&)’:
+../src/main.cpp:40:13: error: ‘CVEX_CONNECT_HORIZON’ was not declared in this scope
+  int mode = CVEX_CONNECT_HORIZON;
+             ^
+../src/main.cpp:65:35: error: ‘cvexWarpShift’ was not declared in this scope
+  cvexWarpShift(left3,swap,-shift,0);
+                                   ^
+../src/main.cpp:67:48: error: ‘cvexConnect’ was not declared in this scope
+  IplImage* connect = cvexConnect(swap,temp,mode);
+                                                ^
+../src/main.cpp:72:11: error: ‘CVEX_KEY_ARROW_UP’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_UP && RGB == true)
+           ^
+../src/main.cpp:77:11: error: ‘CVEX_KEY_ARROW_DOWN’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_DOWN && RGB == true)
+           ^
+../src/main.cpp:82:11: error: ‘CVEX_KEY_ARROW_LEFT’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_LEFT && RGB == true)
+           ^
+../src/main.cpp:87:11: error: ‘CVEX_KEY_ARROW_RIGHT’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_RIGHT && RGB == true)
+           ^
+../src/main.cpp:55:12: warning: unused variable ‘render2’ [-Wunused-variable]
+  IplImage* render2 = cvCloneImage(render);
+            ^
+../src/main.cpp: In function ‘void cvexMakeStereoImageInterlace(IplImage*, IplImage*, IplImage*, int)’:
+../src/main.cpp:156:34: error: ‘cvexWarpShift’ was not declared in this scope
+  cvexWarpShift(left,dest,-shift,0);
+                                  ^
+../src/main.cpp: In function ‘void Move_image(IplImage*, IplImage*, int*, int*, bool, float, float, int, int)’:
+../src/main.cpp:189:55: error: ‘cvexWarpShift’ was not declared in this scope
+   cvexWarpShift(image_right,render,h-h_max/2,v-v_max/2);
+                                                       ^
+../src/main.cpp: In function ‘void ShiftRectificationParameter(IplImage*, IplImage*, int*, int*, bool, float, float, int, int)’:
+../src/main.cpp:246:55: error: ‘cvexWarpShift’ was not declared in this scope
+   cvexWarpShift(image_right,render,h-h_max/2,v-v_max/2);
+                                                       ^
+../src/main.cpp: At global scope:
+../src/main.cpp:306:107: error: ‘CVEX_CONNECT_HORIZON’ was not declared in this scope
+ void cvexMakeStereoImageSidebySide(IplImage* left, IplImage* right, IplImage* dest, int shift, int mode = CVEX_CONNECT_HORIZON)
+                                                                                                           ^
+../src/main.cpp: In function ‘void cvexMakeStereoImageSidebySide(IplImage*, IplImage*, IplImage*, int, int)’:
+../src/main.cpp:310:34: error: ‘cvexWarpShift’ was not declared in this scope
+  cvexWarpShift(left,swap,-shift,0);
+                                  ^
+../src/main.cpp:312:48: error: ‘cvexConnect’ was not declared in this scope
+  IplImage* connect = cvexConnect(swap,temp,mode);
+                                                ^
+../src/main.cpp: In function ‘void cvexSidebySideToAnaglyph(IplImage*, IplImage*, IplImage*, int)’:
+../src/main.cpp:328:34: error: ‘cvexWarpShift’ was not declared in this scope
+  cvexWarpShift(dest,swap,-shift,0);
+                                  ^
+../src/main.cpp: In function ‘void tiempo_real(IplImage*, IplImage*, IplImage*, bool, bool&, float, float, int, int, int)’:
+../src/main.cpp:345:2: error: ‘CvexStereoCameraCalibration’ was not declared in this scope
+  CvexStereoCameraCalibration
+  ^
+../src/main.cpp:346:2: error: expected ‘;’ before ‘calib’
+  calib(cvGetSize(render),CHESS_SIZE,30);
+  ^
+../src/main.cpp:374:94: error: ‘cvexMakeStereoImageAnaglyph’ was not declared in this scope
+    cvexMakeStereoImageAnaglyph(image_left,image_right,render,dis-render->width/2,modeAnaglyph);
+                                                                                              ^
+../src/main.cpp: In function ‘int main()’:
+../src/main.cpp:395:34: error: invalid conversion from ‘int’ to ‘const CvArr* {aka const void*}’ [-fpermissive]
+  cvCreateImage(cvGetSize(1280,480),8,left->nChannels);
+                                  ^
+../src/main.cpp:395:34: error: too many arguments to function ‘CvSize cvGetSize(const CvArr*)’
+In file included from /usr/local/include/opencv2/opencv.hpp:46:0,
+                 from ../src/main.cpp:1:
+/usr/local/include/opencv2/core/core_c.h:413:15: note: declared here
+ CVAPI(CvSize) cvGetSize( const CvArr* arr );
+               ^
+../src/main.cpp:395:38: error: ‘left’ was not declared in this scope
+  cvCreateImage(cvGetSize(1280,480),8,left->nChannels);
+                                      ^
+../src/main.cpp:395:38: note: suggested alternative:
+In file included from /usr/include/c++/4.8/ios:42:0,
+                 from /usr/include/c++/4.8/istream:38,
+                 from /usr/include/c++/4.8/sstream:38,
+                 from /usr/include/c++/4.8/complex:45,
+                 from /usr/local/include/opencv2/core/core.hpp:59,
+                 from /usr/local/include/opencv2/opencv.hpp:47,
+                 from ../src/main.cpp:1:
+/usr/include/c++/4.8/bits/ios_base.h:916:3: note:   ‘std::left’
+   left(ios_base& __base)
+   ^
+../src/main.cpp:416:66: error: ‘CvexStereoCameraCalibrationcalib’ was not declared in this scope
+  CvexStereoCameraCalibrationcalib(cvGetSize(render),CHESS_SIZE,30);
+                                                                  ^
+../src/main.cpp:428:14: error: ‘calib’ was not declared in this scope
+    bool is = calib.findChess(image_left,image_right);
+              ^
+../src/main.cpp:431:85: error: ‘cvexSaveImage’ was not declared in this scope
+     cvexSaveImage(image_left,"calibration_image//left%03d.bmp",calib.getImageCount());
+                                                                                     ^
+../src/main.cpp:434:54: error: ‘CVEX_STEREO_CALIB_LEFT’ was not declared in this scope
+    calib.drawChessboardCorners(image_left,image_left,CVEX_STEREO_CALIB_LEFT);
+                                                      ^
+../src/main.cpp:435:56: error: ‘CVEX_STEREO_CALIB_RIGHT’ was not declared in this scope
+    calib.drawChessboardCorners(image_right,image_right,CVEX_STEREO_CALIB_RIGHT);
+                                                        ^
+../src/main.cpp:438:86: error: ‘cvexSaveImage’ was not declared in this scope
+     cvexSaveImage(image_left,"calibration_image//left%03d_.bmp",calib.getImageCount());
+                                                                                      ^
+../src/main.cpp:445:4: error: ‘calib’ was not declared in this scope
+    calib.solveStereoParameter();
+    ^
+../src/main.cpp:493:70: error: ‘cvexSaveImage’ was not declared in this scope
+    cvexSaveImage(image_left,"capture//capture_left%03d.bmp",saveCount);
+                                                                      ^
+../src/main.cpp:500:11: error: ‘CVEX_KEY_ARROW_LEFT’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_LEFT)
+           ^
+../src/main.cpp:505:11: error: ‘CVEX_KEY_ARROW_RIGHT’ was not declared in this scope
+   if(key==CVEX_KEY_ARROW_RIGHT)
+           ^
+../src/main.cpp:522:57: error: ‘cvexWarpShift’ was not declared in this scope
+    cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                         ^
+../src/main.cpp:526:57: error: ‘cvexWarpShift’ was not declared in this scope
+    cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                         ^
+../src/main.cpp:568:59: error: ‘cvexWarpShift’ was not declared in this scope
+      cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                           ^
+../src/main.cpp:572:59: error: ‘cvexWarpShift’ was not declared in this scope
+      cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                           ^
+../src/main.cpp:610:59: error: ‘cvexWarpShift’ was not declared in this scope
+      cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                           ^
+../src/main.cpp:614:59: error: ‘cvexWarpShift’ was not declared in this scope
+      cvexWarpShift(image_right,image_right,h_shift,v_shift);
+                                                           ^
+../src/main.cpp:664:95: error: ‘cvexMakeStereoImageAnaglyph’ was not declared in this scope
+     cvexMakeStereoImageAnaglyph(image_left,image_right,render,dis-render->width/2,modeAnaglyph);
+                                                                                               ^
+../src/main.cpp:386:12: warning: unused variable ‘image_stereo’ [-Wunused-variable]
+  IplImage *image_stereo = 0;
+            ^
+../src/main.cpp:389:13: warning: unused variable ‘anaglifico’ [-Wunused-variable]
+  CvCapture *anaglifico=0;
+             ^
+../src/main.cpp:401:9: warning: unused variable ‘w’ [-Wunused-variable]
+  double w = IMAGE_WIDTH, h = IMAGE_HEIGHT;
+         ^
+../src/main.cpp:401:26: warning: unused variable ‘h’ [-Wunused-variable]
+  double w = IMAGE_WIDTH, h = IMAGE_HEIGHT;
+                          ^
+../src/main.cpp:402:6: warning: unused variable ‘ax’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+      ^
+../src/main.cpp:402:10: warning: unused variable ‘ay’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+          ^
+../src/main.cpp:402:14: warning: unused variable ‘lx’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+              ^
+../src/main.cpp:402:18: warning: unused variable ‘ly’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+                  ^
+../src/main.cpp:402:22: warning: unused variable ‘rx’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+                      ^
+../src/main.cpp:402:26: warning: unused variable ‘ry’ [-Wunused-variable]
+  int ax, ay, lx, ly, rx, ry, key=0;
+                          ^
+../src/main.cpp:403:15: warning: unused variable ‘pos_x’ [-Wunused-variable]
+  int mode =0, pos_x=0, pos_y=0;
+               ^
+../src/main.cpp:403:24: warning: unused variable ‘pos_y’ [-Wunused-variable]
+  int mode =0, pos_x=0, pos_y=0;
+                        ^
+make: *** [src/main.o] Error 1

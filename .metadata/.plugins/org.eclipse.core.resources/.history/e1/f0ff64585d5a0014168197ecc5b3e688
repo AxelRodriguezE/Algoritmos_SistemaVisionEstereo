@@ -1,0 +1,40 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/contrib/contrib.hpp"
+
+// --------------------------------------------------------------------------
+// main(Number of arguments, Argument values)
+// Description  : This is the entry point of the program.
+// Return value : SUCCESS:0  ERROR:-1
+// --------------------------------------------------------------------------
+int main(int argc, char **argv)
+{
+	Mat image = imread("cat.jpg");
+	vector<string> models;
+	models.push_back("cat.xml");
+
+	// LSVM
+	LatentSvmDetector detector(models);
+
+	vector<cv::LatentSvmDetector::ObjectDetection> detections;
+	detector.detect(image, detections);
+
+	const vector<string> classNames = detector.getClassNames();
+
+	for (size_t i = 0; i < detections.size(); i++) {
+		const cv::LatentSvmDetector::ObjectDetection &od = detections[i];
+		rectangle(image, od.rect, CV_RGB(0, 255, 0), 2);
+		putText(image, classNames[od.classID], Point(od.rect.x+4, od.rect.y+13), FONT_HERSHEY_SIMPLEX, 0.55, CV_RGB(255, 255, 255), 2);
+	}
+
+	imshow("cat", image);
+	waitKey(0);
+
+	return 0;
+}

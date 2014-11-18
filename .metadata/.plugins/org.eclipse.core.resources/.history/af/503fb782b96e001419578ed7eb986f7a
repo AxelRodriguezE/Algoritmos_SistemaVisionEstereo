@@ -1,0 +1,73 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+
+using namespace std;
+using namespace cv;
+
+void correspondenciaBIRCHFIELD(Mat &imagenIzq, Mat &imagenDer)
+{
+	Mat imagenIzq1CH, imagenDer1CH;
+
+	cvtColor(imagenIzq, imagenIzq1CH, CV_BGR2GRAY); //Convierte las imagenes a CV_8UC1 (1 canal)
+	cvtColor(imagenDer, imagenDer1CH, CV_BGR2GRAY);
+
+	IplImage _srcLeft = imagenIzq1CH;
+	IplImage _srcRight = imagenDer1CH;
+	IplImage* srcLeft = &_srcLeft;
+	IplImage* srcRight = &_srcRight;
+	IplImage* leftImage = cvCreateImage(cvGetSize(srcLeft), IPL_DEPTH_8U, 1);
+	IplImage* rightImage = cvCreateImage(cvGetSize(srcRight), IPL_DEPTH_8U, 1);
+	IplImage* depthImage = cvCreateImage(cvGetSize(srcRight), IPL_DEPTH_8U, 1);
+
+	cvFindStereoCorrespondence( leftImage, rightImage, CV_DISPARITY_BIRCHFIELD, depthImage, 50, 15, 3, 6, 8, 15);
+
+	Mat MapaDipBIRCHFIELD(depthImage);
+
+    Mat imgDisparity8U = Mat(MapaDipBIRCHFIELD.rows, MapaDipBIRCHFIELD.cols, CV_8UC1);
+
+    double minVal; double maxVal;
+
+    minMaxLoc(MapaDipBIRCHFIELD, &minVal, &maxVal);
+
+    cout << "Min disp: " << minVal << "Max value: " << maxVal << endl;
+
+    //Display it as a CV_8UC1 image
+    MapaDipBIRCHFIELD.convertTo(imgDisparity8U, CV_8UC1, 255/(maxVal - minVal));
+
+	int intensity = imgDisparity8U.at<uchar>(296,379);
+	cout << intensity << endl;
+
+    imshow("imgDisparity8U", imgDisparity8U);
+
+	imshow("Mapa de Disparidad BIRCHFIELD", MapaDipBIRCHFIELD);
+	imwrite("MapaDisparidad.png", MapaDipBIRCHFIELD);
+}
+
+int main(int argc, char *argv[])
+{
+	Mat imagenIzq = imread("imgLeftRect.png");
+	Mat imagenDer = imread("imgRightRect.png");
+
+	correspondenciaBIRCHFIELD(imagenIzq, imagenDer);
+
+	waitKey(0);
+	return 0;
+}
+
+
