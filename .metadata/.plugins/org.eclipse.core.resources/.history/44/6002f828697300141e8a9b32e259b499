@@ -1,0 +1,75 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+
+using namespace std;
+using namespace cv;
+
+void correspondenciaBM(Mat &imagenIzq, Mat &imagenDer)
+{
+	Mat imagenIzq1CH, imagenDer1CH, g_disp;
+
+	StereoBM stereoBM;
+
+	stereoBM.state->SADWindowSize = 39;
+	stereoBM.state->numberOfDisparities = 192;
+	stereoBM.state->preFilterSize = 5;
+	stereoBM.state->preFilterCap = 61;
+	stereoBM.state->minDisparity = -64;
+	stereoBM.state->textureThreshold = 500;
+	stereoBM.state->uniquenessRatio = 0;
+	stereoBM.state->speckleWindowSize = 0;
+	stereoBM.state->speckleRange = 8;
+	stereoBM.state->disp12MaxDiff = 1;
+
+	cvtColor(imagenIzq, imagenIzq1CH, CV_BGR2GRAY); //Convierte las imagenes a CV_8UC1 (1 canal)
+	cvtColor(imagenDer, imagenDer1CH, CV_BGR2GRAY);
+
+    Mat imgDisparity16S = Mat(imagenIzq1CH.rows, imagenIzq1CH.cols, CV_16S);
+    Mat imgDisparity8U = Mat(imagenIzq1CH.rows, imagenIzq1CH.cols, CV_8UC1);
+
+    stereoBM(imagenIzq1CH, imagenDer1CH, imgDisparity16S);
+
+    double minVal; double maxVal;
+
+    minMaxLoc(imgDisparity16S, &minVal, &maxVal);
+
+    cout << "Min disp: " << minVal << "Max value: " << maxVal << endl;
+
+    //Display it as a CV_8UC1 image
+    imgDisparity16S.convertTo(imgDisparity8U, CV_8UC1, 255/(maxVal - minVal));
+
+	int intensity = imgDisparity8U.at<uchar>(296,379);
+	cout << intensity << endl;
+
+    imshow("imgDisparity8U", imgDisparity8U);
+
+}
+
+int main(int argc, char *argv[])
+{
+	Mat imagenIzq = imread("imgLeftRect.png");
+	Mat imagenDer = imread("imgRightRect.png");
+
+	correspondenciaBM(imagenIzq, imagenDer);
+
+	waitKey(0);
+	return 0;
+}
+
+

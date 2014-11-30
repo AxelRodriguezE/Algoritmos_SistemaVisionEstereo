@@ -1,0 +1,102 @@
+#include <opencv2/opencv.hpp>
+#include <opencv2/gpu/gpu.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/contrib/contrib.hpp>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <opencv/cxmisc.h>
+#include <opencv/cvaux.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <ctype.h>
+
+using namespace std;
+using namespace cv;
+
+static void saveXYZ(const char* filename, const Mat& mat)
+{
+    const double max_z = 1.0e4;
+    FILE* fp = fopen(filename, "wt");
+    for(int y = 0; y < mat.rows; y++)
+    {
+        for(int x = 0; x < mat.cols; x++)
+        {
+            Vec3f point = mat.at<Vec3f>(y, x);
+            if(fabs(point[2] - max_z) < FLT_EPSILON || fabs(point[2]) > max_z) continue;
+            fprintf(fp, "%f %f %f\n", point[0], point[1], point[2]);
+        }
+    }
+    fclose(fp);
+}
+
+void correspondenciaSGBM(Mat &imagenIzq, Mat &imagenDer)
+{
+	Mat MapaDispSGBM, MapaDispSGBM_Norm;
+
+//	Mat Q = Mat(4, 4, CV_64F);
+//	FileStorage q("Q.xml", FileStorage::READ);
+//	q["Q"] >> Q;
+//	q.release();
+
+	StereoSGBM stereoSGBM;
+
+	stereoSGBM.SADWindowSize = 2;
+	stereoSGBM.numberOfDisparities = 192;
+	stereoSGBM.preFilterCap = 2;
+	stereoSGBM.minDisparity = -50;
+	stereoSGBM.uniquenessRatio = 2;
+	stereoSGBM.speckleWindowSize = 200;
+	stereoSGBM.speckleRange = 2;
+	stereoSGBM.disp12MaxDiff = 20;
+	stereoSGBM.fullDP = false;
+	stereoSGBM.P1 = 1200;
+	stereoSGBM.P2 = 3000;
+
+	stereoSGBM(imagenIzq, imagenDer, MapaDispSGBM);
+
+	int64 t = getTickCount();
+	t = getTickCount() - t;
+	cout << "Time elapsed: " << t*1000/getTickFrequency() << endl;
+
+	//Inicio experimento...
+    Mat imgDisparity16S = Mat(imagenIzq.rows, imagenIzq.cols, CV_16S);
+    Mat imgDisparity8U = Mat(imagenIzq.rows, imagenIzq.cols, CV_8UC1);
+
+    stereoSGBM(imagenIzq, imagenDer, imgDisparity16S);
+
+    double minVal; double maxVal;
+
+    minMaxLoc(imgDisparity16S, &minVal, &maxVal);
+
+    cout << "Min disp: " << minVal << "Max value: " << maxVal << endl;
+
+    //Display it as a CV_8UC1 image
+    imgDisparity16S.convertTo(imgDisparity8U, CV_8UC1, 255/(maxVal - minVal));
+
+	int intensity = imgDisparity8U.at<uchar>(296,379);
+	cout << intensity << endl;
+
+    imshow("imgDisparity8U", imgDisparity8U);
+    imwrite("MapaDisparidad_SGBM.png", imgDisparity8U);
+    //...Fin experimento
+}
+
+int main(int argc, char *argv[])
+{
+	Mat imagenIzq = imread("imgLeftRect.png");
+	Mat imagenDer = imread("imgRightRect.png");
+
+	correspondenciaSGBM(imagenIzq, imagenDer);
+
+	waitKey(0);
+	return 0;
+}
+
+

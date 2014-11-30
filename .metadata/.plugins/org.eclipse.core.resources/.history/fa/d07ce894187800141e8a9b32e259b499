@@ -1,0 +1,248 @@
+#include <cv.h>
+#include <highgui.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+IplImage *image = 0;
+
+double
+compareSURFDescriptors( const float* d1, const float* d2, double best, int length )
+{
+    double total_cost = 0;
+    assert( length % 4 == 0 );
+    for( int i = 0; i < length; i += 4 )
+    {
+        double t0 = d1[i] - d2[i];
+        double t1 = d1[i+1] - d2[i+1];
+        double t2 = d1[i+2] - d2[i+2];
+        double t3 = d1[i+3] - d2[i+3];
+        total_cost += t0*t0 + t1*t1 + t2*t2 + t3*t3;
+        if( total_cost > best )
+            break;
+    }
+    return total_cost;
+}
+
+int
+naiveNearestNeighbor( const float* vec, int laplacian,
+                      const CvSeq* model_keypoints,
+                      const CvSeq* model_descriptors )
+{
+    int length = (int)(model_descriptors->elem_size/sizeof(float));
+    int i, neighbor = -1;
+    double d, dist1 = 1e6, dist2 = 1e6;
+    CvSeqReader reader, kreader;
+    cvStartReadSeq( model_keypoints, &kreader, 0 );
+    cvStartReadSeq( model_descriptors, &reader, 0 );
+
+    for( i = 0; i < model_descriptors->total; i++ )
+    {
+        const CvSURFPoint* kp = (const CvSURFPoint*)kreader.ptr;
+        const float* mvec = (const float*)reader.ptr;
+        CV_NEXT_SEQ_ELEM( kreader.seq->elem_size, kreader );
+        CV_NEXT_SEQ_ELEM( reader.seq->elem_size, reader );
+        if( laplacian != kp->laplacian )
+            continue;
+        d = compareSURFDescriptors( vec, mvec, dist2, length );
+        if( d < dist1 )
+        {
+            dist2 = dist1;
+            dist1 = d;
+            neighbor = i;
+        }
+        else if ( d < dist2 )
+            dist2 = d;
+    }
+    if ( dist1 < 0.6*dist2 )
+        return neighbor;
+    return -1;
+}
+
+void
+findPairs( const CvSeq* objectKeypoints, const CvSeq* objectDescriptors,
+           const CvSeq* imageKeypoints, const CvSeq* imageDescriptors, vector<int>& ptpairs )
+{
+    int i;
+    CvSeqReader reader, kreader;
+    cvStartReadSeq( objectKeypoints, &kreader );
+    cvStartReadSeq( objectDescriptors, &reader );
+    ptpairs.clear();
+
+    for( i = 0; i < objectDescriptors->total; i++ )
+    {
+        const CvSURFPoint* kp = (const CvSURFPoint*)kreader.ptr;
+        const float* descriptor = (const float*)reader.ptr;
+        CV_NEXT_SEQ_ELEM( kreader.seq->elem_size, kreader );
+        CV_NEXT_SEQ_ELEM( reader.seq->elem_size, reader );
+        int nearest_neighbor = naiveNearestNeighbor( descriptor, kp->laplacian, imageKeypoints, imageDescriptors );
+        if( nearest_neighbor >= 0 )
+        {
+            ptpairs.push_back(i);
+            ptpairs.push_back(nearest_neighbor);
+        }
+    }
+}
+
+/* a rough implementation for object location */
+int
+locatePlanarObject( const CvSeq* objectKeypoints, const CvSeq* objectDescriptors,
+                    const CvSeq* imageKeypoints, const CvSeq* imageDescriptors,
+                    const CvPoint src_corners[4], CvPoint dst_corners[4] )
+{
+    double h[9];
+    CvMat _h = cvMat(3, 3, CV_64F, h);
+    vector<int> ptpairs;
+    vector<CvPoint2D32f> pt1, pt2;
+    CvMat _pt1, _pt2;
+    int i, n;
+
+    findPairs( objectKeypoints, objectDescriptors, imageKeypoints, imageDescriptors, ptpairs );
+    n = ptpairs.size()/2;
+    if( n < 4 )
+        return 0;
+
+    pt1.resize(n);
+    pt2.resize(n);
+    for( i = 0; i < n; i++ )
+    {
+        pt1[i] = ((CvSURFPoint*)cvGetSeqElem(objectKeypoints,ptpairs[i*2]))->pt;
+        pt2[i] = ((CvSURFPoint*)cvGetSeqElem(imageKeypoints,ptpairs[i*2+1]))->pt;
+    }
+
+    _pt1 = cvMat(1, n, CV_32FC2, &pt1[0] );
+    _pt2 = cvMat(1, n, CV_32FC2, &pt2[0] );
+    if( !cvFindHomography( &_pt1, &_pt2, &_h, CV_RANSAC, 5 ))
+        return 0;
+
+    for( i = 0; i < 4; i++ )
+    {
+        double x = src_corners[i].x, y = src_corners[i].y;
+        double Z = 1./(h[6]*x + h[7]*y + h[8]);
+        double X = (h[0]*x + h[1]*y + h[2])*Z;
+        double Y = (h[3]*x + h[4]*y + h[5])*Z;
+        dst_corners[i] = cvPoint(cvRound(X), cvRound(Y));
+    }
+
+    return 1;
+}
+
+int main(void)
+{
+    //template image to be recognized
+        const char* object_filename = "C:/images/image2.png";
+
+    // Initialize capture device
+    CvCapture* capture = cvCaptureFromCAM( CV_CAP_ANY );
+    if(!capture) printf("No Capture");
+
+    CvMemStorage* storage = cvCreateMemStorage(0);
+
+    cvNamedWindow("Template", 1);
+    cvNamedWindow("Matching Display", 1);
+
+    static CvScalar colors[] =
+    {
+        {{0,0,255}}, //0=red
+        {{0,128,255}},
+        {{0,255,255}},
+        {{0,255,0}}, //3=green
+        {{255,128,0}},
+        {{255,255,0}},
+        {{255,0,0}},
+        {{255,0,255}},
+        {{255,255,255}}
+    };
+
+    IplImage* object = cvLoadImage( object_filename, CV_LOAD_IMAGE_GRAYSCALE );
+    IplImage* image = NULL, *image_layer=NULL/*, *image_layer2*/;
+    IplImage* image_color = NULL;
+
+    while(1){
+        image = cvQueryFrame(capture);
+        image_layer = cvCreateImage(cvSize(image->width,image->height),image->depth,1);
+        //Convert frame to gray and store in image
+        cvCvtColor(image, image_layer, CV_BGR2GRAY);
+
+        IplImage* object_color = cvCreateImage(cvGetSize(object), 8, 3);
+        cvCvtColor( object, object_color, CV_GRAY2BGR );
+
+        CvSeq *objectKeypoints = 0, *objectDescriptors = 0;
+        CvSeq *imageKeypoints = 0, *imageDescriptors = 0;
+        int i;
+        CvSURFParams params = cvSURFParams(100, 1);
+
+        double tt = (double)cvGetTickCount();
+        //Calculate and extract feature point from template image
+        cvExtractSURF( object, 0, &objectKeypoints, &objectDescriptors, storage, params );
+        printf("Object Descriptors: %d\n", objectDescriptors->total);
+
+        //Calculate and extract feature point from camera frame
+        cvExtractSURF( image_layer, 0, &imageKeypoints, &imageDescriptors, storage, params );
+        printf("Image Descriptors: %d\n", imageDescriptors->total);
+        tt = (double)cvGetTickCount() - tt;
+        printf( "Extraction time = %gms\n", tt/(cvGetTickFrequency()*1000.));
+
+        CvPoint src_corners[4] = {{0,0}, {object->width,0}, {object->width, object->height}, {0, object->height}};
+        CvPoint dst_corners[4];
+
+        CvPoint img_corners[4] = {{0,0}, {image_layer->width,0}, {image_layer->width, image_layer->height}, {0, image_layer->height}};
+        CvPoint dstimg_corners[4];
+
+        //Mark the matching area with green rectangle
+        if( locatePlanarObject( objectKeypoints, objectDescriptors, imageKeypoints,
+            imageDescriptors, src_corners, dst_corners ))
+        {
+            for( i = 0; i < 4; i++ )
+            {
+                CvPoint r1 = dst_corners[i%4];
+                CvPoint r2 = dst_corners[(i+1)%4];
+                //cvPutText(image, "Matched!!", cvPoint(r1.x+5, r1.y+5), );
+                //Green rectangle
+                cvLine( image, cvPoint(r1.x, r1.y ),
+                    cvPoint(r2.x, r2.y ), colors[3], 2 );
+            }
+
+            for( i = 0; i < 2; i++)
+            {
+                CvPoint r1 = dst_corners[i];
+                CvPoint r2 = dst_corners[(i+2)];
+                cvLine(image, cvPoint(r1.x, r1.y), cvPoint(r2.x, r2.y), colors[1]);
+
+            }
+        }
+
+        vector<int> ptpairs;
+        findPairs( objectKeypoints, objectDescriptors, imageKeypoints, imageDescriptors, ptpairs );
+        printf("Matching points = %d\n\n", (int)ptpairs.size());
+
+        //Display the feature point
+        for( i = 0; i < objectKeypoints->total; i++ )
+        {
+            CvSURFPoint* r = (CvSURFPoint*)cvGetSeqElem( objectKeypoints, i );
+            CvPoint center;
+            int radius;
+            center.x = cvRound(r->pt.x);
+            center.y = cvRound(r->pt.y);
+            radius = cvRound(r->size*1.2/9.*2);
+            cvCircle( object_color, center, radius, colors[4], 1, 8, 0 );
+        }
+
+        cvShowImage( "Template", object_color );
+        cvShowImage("Matching Display", image);
+
+        cvWaitKey(1);
+    }
+
+    cvDestroyWindow("Template");
+    cvDestroyWindow("Matching Display");
+
+    cvReleaseCapture( &capture );
+
+    return 0;
+}

@@ -2,13 +2,4 @@
 **** Build of configuration Debug for project Birchfield ****
 
 make all 
-Building file: ../src/main.cpp
-Invoking: GCC C++ Compiler
-g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/main.d" -MT"src/main.d" -o"src/main.o" "../src/main.cpp"
-Finished building: ../src/main.cpp
- 
-Building target: Birchfield
-Invoking: GCC C++ Linker
-g++ -L/usr/local/lib -o"Birchfield"  ./src/main.o   -lopencv_contrib -lopencv_objdetect -lopencv_legacy -lopencv_flann -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_ml -lopencv_video -lopencv_features2d -lopencv_calib3d 
-Finished building target: Birchfield
- 
+make: No se hace nada para «all».
